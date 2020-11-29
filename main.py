@@ -1,4 +1,4 @@
 from equation import equation
 
-eq = equation("x^3")
-print(eq.derive())
+eq = equation("3*x^4")
+print(eq.deriveFunc())
