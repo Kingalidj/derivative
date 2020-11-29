@@ -5,7 +5,7 @@ class equation:
     eqType = {
             "[a]*x^[b]": "[a*b]*x^([b-1])", 
             "x^[a]": "[a]*x^([a-1])", 
-            "[b]*x":"[b]", 
+            "[a]*x":"[a]", 
             "x":"0", 
             "[a]":"0",
             "sin(x)": "cos(x)",
@@ -13,7 +13,7 @@ class equation:
             }
 
     def __init__(self, eq):
-        self.eq = eq.lower()
+        self.eq = eq.lower().replace(" ", "")
 
     def show(self):
         print(self.eq)
@@ -45,6 +45,15 @@ class equation:
                 return False
 
         if b == "nan" and o == "nan":
+
+            foundOp = False
+            for op in ["+", "-", "*", "/"]:
+                if op in a:
+                    foundOp = True
+            if not foundOp:
+                return a
+
+
             parts = re.split('[+-/*/]+', a)
             for op in self.operations:
                 if op in a:
@@ -114,7 +123,11 @@ class equation:
         eqParts = self.breakdown(match)
         eq = self.breakdown(self.eq)
         res = self.eqType[match]
-        variables = [""] * (match.count('a') + match.count('b'))
+        variables = []
+        if "a" in match:
+            variables.append("")
+        if "b" in match:
+            variables.append("")
 
         for i, p in enumerate(eqParts):
             if "a" in p:
@@ -128,7 +141,6 @@ class equation:
             res = res.replace("b", variables[1])
         
         additions = re.split(r"(?![^[]*])", res)
-        print(additions)
         res = ""
         for a in additions:
             if "[" in a:
@@ -146,7 +158,15 @@ class equation:
 
     def derive(self, d = "x"):
         eq = self.eq
-        if self.dMatch(d) != "":
-            return self.eqType[self.dMatch(d)]
-        return "no derivative found"
+        eq = eq.split("+")
+        if len(eq) == 1:
+            return self.deriveFunc(d)
+
+        res = ""
+        for i, func in enumerate(eq):
+            f = equation(func)
+            res += f.derive(d)
+            res += "+" if i < len(eq) - 1 else ""
+
+        return res
 
