@@ -2,6 +2,7 @@ import re
 class equation:
 
     operations = ["+", "-", "*", "/"]
+    functions = []
     eqType = {
             "[a]*x^[b]": "[a*b]*x^([b-1])", 
             "x^[a]": "[a]*x^([a-1])", 
@@ -13,7 +14,7 @@ class equation:
             }
 
     def __init__(self, eq):
-        self.eq = eq.lower().replace(" ", "")
+        self.eq = eq.lower().replace(" ", "").strip()
 
     def show(self):
         print(self.eq)
@@ -21,20 +22,21 @@ class equation:
     def breakdown(self, eq):
         res = [""]
         for i in range(len(eq)):
-            if eq[i] == "+":
+            if eq[i] in ["+", "*", "/", "^"]:
                 res.append("")
+            #if eq[i] == "+":
+            #    res.append("")
             elif eq[i] == "-" and eq[i - 1] != "^" and eq[i - 1] != "(" and i != 0:
                 res.append("")
-            elif eq[i] == "*":
-                res.append("")
-            elif eq[i] == "/":
-                res.append("")
-            elif eq[i] == "^":
-                res.append("")
+            #elif eq[i] in ["+", "*", "/", "^"]:
+            #    res.append("")
+            #elif eq[i] == "/":
+            #    res.append("")
+            #elif eq[i] == "^":
+            #    res.append("")
             else:
                 res[-1] += eq[i]
-
-        return re.split('[+-/*/^]+', eq)
+        return res
 
     def operate(self, a, b = "nan", o = "nan"):
         def isfloat(val):
@@ -54,7 +56,7 @@ class equation:
                 return a
 
 
-            parts = re.split('[+-/*/]+', a)
+            parts = re.split('[+\-\*/]+', a)
             for op in self.operations:
                 if op in a:
                     o = op
@@ -114,7 +116,6 @@ class equation:
 
         return None
 
-
     def deriveFunc(self, d = "x"):
         match = self.dMatch(d)
         if (match == None): 
@@ -153,8 +154,62 @@ class equation:
         res = res.replace("x", d)
         return res
 
+    def mapFunc(self, d = "x"):
+        eq = ""
+        numb = False
+        numbers = [""]
+        for i,s in enumerate(self.eq):
+            if s.isnumeric() or s == "." and numb:
+                numbers[-1] += s
+                numb = True
+            elif numb and not s.isnumeric():
+                numb = False
+                eq += f"[n{len(numbers) - 1}]"
+                eq += s
+                numbers.append("")
+            else:
+                eq += s
+        if numb:
+            eq += F"[n{len(numbers) - 1}]"
 
 
+        numbers = list(map(int, filter(None, numbers)))
+
+        additions = [""]
+        bracket = 0
+        print(eq)
+        for e in eq:
+            if e == "(":
+                additions.append(e)
+                bracket += 1
+            elif e == ")":
+                additions[-1] += e
+                additions.append("")
+                bracket -= 1
+            elif bracket != 0:
+                additions[-1] += e
+            elif e in ["+", "-", "*", "/", "^"]:
+                additions.append(e)
+                additions.append("")
+            else:
+                additions[-1] += e
+
+        additions = list(filter(None, additions))
+        funcMap = [""]
+        functions = {}
+
+        fcount = 0
+        for a in additions:
+            if "(" in a or "x" in a:
+                funcMap.append(f"[f{fcount}]")
+                functions[f"[f{fcount}]"] = a
+                fcount += 1
+                funcMap.append("")
+            else:
+                funcMap[-1] += a
+
+
+        
 
     def derive(self, d = "x"):
         eq = self.eq
